@@ -29,14 +29,17 @@ That installs ComfyUI, downloads the checkpoint, patches the encoder node, insta
 
 Re-running `./bootstrap.sh` after a restart skips everything already done and starts in seconds.
 
-## Quick start — your own template image
+## Quick start — your own RunPod template
 
-```bash
-make build IMAGE=youruser/qwen-comfyui
-make push  IMAGE=youruser/qwen-comfyui
-```
+A pod from this template comes up with ComfyUI already serving — no terminal, no clone.
 
-Then create a RunPod template with that image, HTTP port `8188`, TCP port `22`, a **100 GB network volume mounted at `/workspace`**, and whatever environment variables you want from [`.env.example`](.env.example). The image is a few GB; the 28.4 GB checkpoint is deliberately *not* baked in — it lands on the volume on first boot and is reused by every later pod.
+Push to `main` (or run the **build image** workflow by hand) and GitHub Actions publishes `ghcr.io/<your-user>/qwen-template:latest`. Make the package public once, then create a RunPod template with that image, HTTP port **8188**, TCP port **22**, container disk **20 GB**, and a **100 GB network volume at `/workspace`**.
+
+Full field-by-field walkthrough in [docs/RUNPOD.md](docs/RUNPOD.md#route-b--your-own-runpod-template).
+
+> Build in CI rather than locally on Apple Silicon — `--platform linux/amd64` runs the torch install under qemu emulation and takes roughly an hour. `make build` is there for Linux hosts.
+
+The image is a few GB; the 28.4 GB checkpoint is deliberately *not* baked in — it lands on the volume on first boot and is reused by every later pod.
 
 ---
 

@@ -119,29 +119,81 @@ cd /workspace/qwen-template && nohup ./bootstrap.sh > /workspace/comfy.log 2>&1 
 
 ---
 
-## Route B — your own template image
+## Route B — your own RunPod template
 
-```bash
-make build push IMAGE=youruser/qwen-comfyui
+A pod from this template comes up with ComfyUI already serving on 8188. No
+terminal, no clone, no port fiddling.
+
+### 1. Get an image built
+
+Pushing to `main` triggers [`.github/workflows/build.yml`](../.github/workflows/build.yml),
+which builds on GitHub's amd64 runners and publishes to:
+
+```
+ghcr.io/<your-github-user>/qwen-template:latest
 ```
 
-Then **Templates → New Template**:
+Build it by hand from the **Actions** tab → *build image* → **Run workflow**.
+Roughly 15–25 minutes for the first run; later runs hit the layer cache.
+
+> **Build in CI, not on an Apple Silicon Mac.** `make build` works, but
+> `--platform linux/amd64` runs the torch install through qemu emulation and
+> takes the better part of an hour. The Makefile target is there for Linux hosts
+> and for debugging.
+
+### 2. Make the package public — one time
+
+GHCR packages default to **private**, and RunPod cannot pull a private image
+without registry credentials. After the first successful build:
+
+**GitHub repo → Packages → `qwen-template` → Package settings → Change visibility
+→ Public.**
+
+(Prefer to keep it private? Leave it, and use **Select registry authentication**
+in the RunPod template with a GitHub personal access token that has
+`read:packages`.)
+
+### 3. Create the template
+
+**Templates → New Template**:
 
 | Field | Value |
 |---|---|
-| Container Image | `youruser/qwen-comfyui:latest` |
-| Container Disk | 20 GB |
-| Volume Mount Path | `/workspace` |
-| HTTP Ports | `8188` |
-| TCP Ports | `22` |
-| Environment Variables | anything from [`.env.example`](../.env.example) |
+| Template name | `qwen-comfyui` |
+| Template type | **Pods** |
+| Compute type | **NVIDIA · GPU** |
+| Public template | off |
+| Container image | `ghcr.io/<your-github-user>/qwen-template:latest` |
+| Start command | **leave empty** — the image already starts ComfyUI |
+| Container disk | **20 GB** (5 GB is too small: ComfyUI-Manager's pip installs land in the image's writable layer) |
+| Persistent storage mount path | `/workspace` |
+| Volume disk | 100 GB — ignored when you attach a network volume at deploy, so it is just a safe fallback |
 
-Deploy a pod from that template with a 100 GB network volume attached. The
-container starts, provisions onto the volume and launches ComfyUI on its own —
-no terminal needed.
+**Networking configuration:**
 
-`MODELS` is the variable worth setting at template level: it decides which
-checkpoint gets pulled on first boot.
+| Type | Label | Port |
+|---|---|---|
+| HTTP Ports | `ComfyUI` | `8188` |
+| TCP Ports | `SSH` | `22` |
+
+Getting 8188 in here is the whole point — a stock template exposes only 8888 for
+Jupyter, which is why the port never showed up in the Connect tab.
+
+**Environment variables** (all optional, full list in [`.env.example`](../.env.example)):
+
+| Name | Value |
+|---|---|
+| `MODELS` | `v23-sfw` — which checkpoint to pull on first boot |
+| `HF_TOKEN` | your read-only token, for a faster download |
+
+### 4. Deploy
+
+**Pods → Deploy**, pick a 48 GB GPU, select this template, and attach your
+**100 GB network volume**. The container provisions onto the volume and launches
+ComfyUI by itself; watch progress under the pod's **Logs** tab.
+
+Every later pod from this template reuses the volume, so it skips the download
+and is ready in under a minute.
 
 ---
 
