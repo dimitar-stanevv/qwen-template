@@ -39,8 +39,15 @@ vpip install --quiet --upgrade pip wheel
 
 if ! vpython -c "import torch" 2>/dev/null; then
   log "installing torch (this is the slow part, ~5 min)"
-  if [[ -n "$TORCH_INDEX_URL" ]]; then
-    vpip install torch torchvision torchaudio --index-url "$TORCH_INDEX_URL"
+  INDEX="$TORCH_INDEX_URL"
+  if [[ -z "$INDEX" ]] && have nvidia-smi; then
+    # Match the wheel to the driver rather than taking PyPI's newest.
+    DRIVER_CUDA="$(driver_cuda_version)"
+    INDEX="$(torch_index_for_driver "$DRIVER_CUDA")"
+    [[ -n "$INDEX" ]] && dim "driver supports CUDA ${DRIVER_CUDA} → $INDEX"
+  fi
+  if [[ -n "$INDEX" ]]; then
+    vpip install torch torchvision torchaudio --index-url "$INDEX"
   else
     vpip install torch torchvision torchaudio
   fi

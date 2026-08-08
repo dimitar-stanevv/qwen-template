@@ -79,6 +79,28 @@ vpip() { vpython -m pip "$@"; }
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
+# Highest CUDA version this host's driver supports, e.g. "12.8". Empty if no GPU.
+driver_cuda_version() {
+  nvidia-smi 2>/dev/null | sed -n 's/.*CUDA Version: *\([0-9]*\.[0-9]*\).*/\1/p' | head -1
+}
+
+# Pick a torch wheel index the driver can actually run.
+#
+# PyPI's default torch tracks the newest CUDA, so on a host whose driver is even
+# slightly behind you get "The NVIDIA driver on your system is too old (found
+# version 12080)" — which blames the driver for what is really a wheel mismatch.
+# Echoes an empty string when the driver is new enough for the PyPI default.
+torch_index_for_driver() {
+  local v="${1:-}" major minor
+  [[ -z "$v" ]] && { echo ""; return; }
+  major="${v%%.*}"; minor="${v##*.}"
+  if   (( major >= 13 )); then echo ""
+  elif (( major == 12 && minor >= 8 )); then echo "https://download.pytorch.org/whl/cu128"
+  elif (( major == 12 && minor >= 6 )); then echo "https://download.pytorch.org/whl/cu126"
+  elif (( major == 12 )); then echo "https://download.pytorch.org/whl/cu124"
+  else echo ""; fi
+}
+
 require_linux_gpu() {
   if ! have nvidia-smi; then
     warn "nvidia-smi not found — is this a GPU pod? ComfyUI will fall back to CPU and be unusably slow."

@@ -31,7 +31,12 @@ WORKDIR /opt/qwen-template
 COPY scripts/ ./scripts/
 
 ARG COMFYUI_REF=master
-ARG TORCH_INDEX_URL=""
+# Pinned rather than left to PyPI's default: there is no GPU at build time, so
+# the runtime auto-detection cannot help here, and PyPI's newest torch fails on
+# any host whose driver is a release behind ("NVIDIA driver on your system is
+# too old"). cu128 runs on the CUDA 12.8+ drivers RunPod fields, Blackwell
+# included. start.sh repairs it at runtime if a host turns out to be older.
+ARG TORCH_INDEX_URL="https://download.pytorch.org/whl/cu128"
 RUN COMFYUI_REF="${COMFYUI_REF}" TORCH_INDEX_URL="${TORCH_INDEX_URL}" \
     bash ./scripts/install_comfyui.sh
 
