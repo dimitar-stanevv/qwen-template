@@ -19,8 +19,8 @@ if [[ "${SKIP_PROVISION:-0}" != "1" ]]; then
 fi
 
 # Helps a lot on a 28 GB checkpoint that gets paged between CPU and GPU.
+# (HF_HOME / PIP_CACHE_DIR are exported in lib.sh, before provisioning runs.)
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
-export HF_HOME="${HF_HOME:-$COMFY_DATA/.cache/huggingface}"
 
 PY="python3"
 [[ -x "$VENV_DIR/bin/python" ]] && PY="$VENV_DIR/bin/python"

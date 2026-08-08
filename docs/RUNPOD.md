@@ -28,9 +28,26 @@ A network volume keeps the model, your outputs and your edited workflows.
 |---|---|
 | GPU | L40S / RTX 6000 Ada / A40 (48 GB). See sizing in the README. |
 | Network volume | the one you just made, mounted at `/workspace` |
-| Template | any RunPod PyTorch or CUDA template |
+| Pod template | **any RunPod PyTorch template** — e.g. `runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04`. Prefer the newest offered. |
+| Container disk | 20 GB is enough (see below) |
 | HTTP ports | `8188` |
 | TCP ports | `22` |
+
+#### Which pod template?
+
+Any RunPod **PyTorch** template works, and the version barely matters: bootstrap
+builds its own virtualenv on the volume and installs a current torch into it, so
+the image's torch is never used. All the template has to supply is Ubuntu,
+Python 3.10+, `git` and the CUDA userspace — every RunPod PyTorch image has all
+four. A plain CUDA template works too; bootstrap installs `git` and
+`python3-venv` if they are missing.
+
+Prefer a newer template when the list offers one, purely so the CUDA userspace
+is better matched to the driver. Do not pick a bare Ubuntu image with no CUDA.
+
+**Container disk can stay at the 20 GB default.** ComfyUI, the venv, the model
+and every cache (pip, Hugging Face) are placed under `/workspace`, on the network
+volume. Nothing large is written to container disk.
 
 ### 3. Bootstrap
 

@@ -58,6 +58,13 @@ COMFY_EXTRA_ARGS="${COMFY_EXTRA_ARGS:-}"
 export COMFY_SRC COMFY_DATA VENV_DIR COMFYUI_REPO COMFYUI_REF TORCH_INDEX_URL
 export HF_REPO MODELS PATCH_MODE INSTALL_MANAGER COMFY_PORT COMFY_EXTRA_ARGS
 
+# Keep every cache on the network volume. RunPod's container disk is small and
+# defaults to ~20 GB — a torch wheel plus pip's cache will fill it and the
+# install dies halfway with "no space left on device".
+export HF_HOME="${HF_HOME:-$COMFY_DATA/.cache/huggingface}"
+export PIP_CACHE_DIR="${PIP_CACHE_DIR:-$COMFY_DATA/.cache/pip}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$COMFY_DATA/.cache}"
+
 # ---------------------------------------------------------------- helpers ---
 # Python from the venv when it exists, otherwise the system one.
 vpython() {
