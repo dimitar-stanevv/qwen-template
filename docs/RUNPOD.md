@@ -68,6 +68,37 @@ Click **Connect → HTTP Service [Port 8188]**, or go straight to:
 https://<POD_ID>-8188.proxy.runpod.net
 ```
 
+#### Port 8188 is not in the Connect tab
+
+Expect this if you deployed straight from a stock RunPod template — those expose
+`8888` for Jupyter and nothing else, and the proxy only routes ports declared in
+the pod config. ComfyUI running is not enough.
+
+Either **⋮ → Edit Pod → HTTP ports → add `8188`** (the pod restarts; do it before
+the download, not after), or skip the exposed port entirely and tunnel over the
+SSH connection you already have:
+
+```bash
+ssh root@<POD_IP> -p <PORT> -i ~/.ssh/id_ed25519 -L 8188:localhost:8188
+```
+
+Run `./bootstrap.sh` inside that session and open `http://localhost:8188`
+locally. Nothing needs to be exposed, and the tunnel lives as long as the SSH
+session does.
+
+### 4b. Confirm the volume is actually mounted
+
+Before kicking off a 28 GB download, make sure it is landing on the network
+volume and not on container disk:
+
+```bash
+df -h /workspace
+```
+
+A ~100 GB filesystem means you are good. If you see the small container disk, or
+no `/workspace` at all, the pod has no network volume attached — redeploy with
+one, or you will re-download the checkpoint every session.
+
 The workflows are in the sidebar under **Workflows**. Open
 `01-qwen-image-edit` and press **Run**.
 

@@ -97,6 +97,21 @@ edits, and v23 the best at following instructions. Fetch both and switch:
 
 Also state it in the prompt — "keep her face identical" is not implied.
 
+## There is no port 8188 in the pod's Connect tab
+
+The stock RunPod templates expose `8888` (Jupyter) and nothing else, and the
+proxy only routes ports declared in the pod config — ComfyUI listening on 8188 does
+not make the port appear.
+
+Fix it permanently with **⋮ → Edit Pod → HTTP ports → add `8188`** (the pod
+restarts), or avoid exposing anything and tunnel over SSH:
+
+```bash
+ssh root@<POD_IP> -p <PORT> -i ~/.ssh/id_ed25519 -L 8188:localhost:8188
+```
+
+then open `http://localhost:8188` on your own machine.
+
 ## ComfyUI starts but the RunPod proxy URL 502s
 
 The server binds after model scanning, which takes a moment on a 28 GB file.
