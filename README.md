@@ -65,7 +65,7 @@ Everything is environment variables — set them in the RunPod pod/template conf
 |---|---|---|
 | `MODELS` | `v23-sfw` | Comma-separated checkpoints to fetch. `./scripts/download_models.sh --list` shows all keys. |
 | `HF_TOKEN` | — | Optional. The repo is public so downloads work without it, but a token gets you higher rate limits and Xet-accelerated transfer — worth setting for a 28 GB pull. A read-only token is enough. |
-| `PATCH_MODE` | `shadow` | How to fix the encoder node. See below. |
+| `PATCH_MODE` | `append` | How to fix the encoder node. See below. |
 | `COMFY_EXTRA_ARGS` | — | Extra `main.py` flags, e.g. `--lowvram`. |
 | `COMFY_DATA` | `/workspace/ComfyUI` | Models / outputs / workflows. Must be on the volume. |
 | `FORCE_WORKFLOWS` | `0` | Re-copy bundled workflows on boot, discarding your edits. |
@@ -88,11 +88,13 @@ The workflows are auto-retargeted at whichever version you fetched, including th
 
 ComfyUI's stock `TextEncodeQwenImageEditPlus` rescales reference images badly — you get unexplained zoom, off-centre crops and mirrored edges. This is the single biggest source of "the model is bad" complaints, and it is not the model.
 
-The author publishes a fixed node and tells you to overwrite `comfy_extras/nodes_qwen.py` with it. This template defaults to something safer:
+The author publishes a fixed node and tells you to overwrite `comfy_extras/nodes_qwen.py` with it. This template defaults to a less destructive variant:
 
-- **`shadow` (default)** — ships the fix as a custom node registering the same `node_id`. ComfyUI loads custom nodes *after* built-ins and the registry is last-writer-wins, so it overrides the core node without touching a core file. Survives ComfyUI updates; uninstall by deleting the folder. Workflows stay compatible with everyone else's.
-- **`overwrite`** — the author's literal method, with an automatic backup. Note it also *removes* `EmptyQwenImageLayeredLatentImage`, which the author's file does not define.
+- **`append` (default)** — appends a redefinition to the end of ComfyUI's own `nodes_qwen.py`. Python's later definition wins, and `QwenExtension.get_node_list()` resolves the name at call time, so the patched class is what gets registered — while every other node in the file survives. Backed up and reversible.
+- **`overwrite`** — the author's literal method. Works, but *removes* `EmptyQwenImageLayeredLatentImage`, which the author's file does not define.
 - **`none`** — stock node, quirk included.
+
+> **Not an option: shipping it from `custom_nodes`.** ComfyUI's `init_external_custom_nodes()` passes the set of built-in node ids as `ignore`, so a custom node cannot override a core node id — it imports, logs, and is then silently skipped. An earlier version of this template did exactly that and appeared to work until the node threw `unexpected keyword argument 'target_latent'` at runtime.
 
 Either fixed path adds a 4th image input and the `target_latent` input that does the actual fixing: wire your `EmptyLatentImage` in and references get encoded at the sampling resolution.
 
@@ -111,11 +113,11 @@ scripts/
   provision.sh                idempotent setup, runs on every boot
   install_comfyui.sh          ComfyUI source + venv + torch
   download_models.py|sh       resumable, size-verified checkpoint fetch
-  install_qwen_node.sh        the encoder-node fix (shadow/overwrite/none)
+  install_qwen_node.sh        the encoder-node fix (append/overwrite/none)
   install_workflows.py        copy + retarget workflows into the sidebar
-custom_nodes/
-  qwen_edit_target_latent/    the patched TextEncodeQwenImageEditPlus
-patches/nodes_qwen.v2.py      the author's original file, for overwrite mode
+patches/
+  qwen_edit_plus_append.py    the patched class, appended to ComfyUI's file
+  nodes_qwen.v2.py            the author's original file, for overwrite mode
 workflows/
   01-qwen-image-edit.json     image editing, 2 inputs wired, target_latent set
   02-qwen-text-to-image.json  same checkpoint, no input images

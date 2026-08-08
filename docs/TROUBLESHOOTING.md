@@ -13,16 +13,16 @@ pkill -f "main.py" ; cd /workspace/qwen-template && ./bootstrap.sh
 
 ## The output is zoomed in, cropped oddly, or has a mirrored edge
 
-This is the stock encoder node, not the model. Check the patch actually loaded:
+This is the stock encoder node, not the model. Check the patch actually applied:
 
 ```bash
-grep -r "target_latent" /workspace/ComfyUI/custom_nodes/qwen_edit_target_latent/ >/dev/null && echo "patch present"
+grep -c "qwen-template patch" "$COMFY_SRC/comfy_extras/nodes_qwen.py"
 ```
 
-In the ComfyUI log you should see:
+`1` means it is in place. In the ComfyUI log you should see:
 
 ```
-[qwen-template] TextEncodeQwenImageEditPlus patched (4 image inputs + target_latent scaling)
+[qwen-template] TextEncodeQwenImageEditPlus redefined (4 image inputs + target_latent scaling)
 ```
 
 If the node is present but you still get drift, confirm `EmptyLatentImage` is
@@ -38,8 +38,26 @@ cd /workspace/ComfyUI && git pull && cd /workspace/qwen-template && ./bootstrap.
 
 ## `TextEncodeQwenImageEditPlus` has only 3 image inputs
 
-The patch did not load — see above. The stock node has `image1..image3` and no
+The patch did not apply — see above. The stock node has `image1..image3` and no
 `target_latent`; the patched one has `image1..image4` plus `target_latent`.
+
+## `TypeError: execute() got an unexpected keyword argument 'target_latent'`
+
+The workflow has the patched node's inputs but ComfyUI registered the *stock*
+class. Templates from before 2026-08-09 shipped the fix as a custom node, which
+ComfyUI refuses to register over a built-in id — it imports, logs a reassuring
+"patched" message, and is skipped.
+
+Update and re-apply:
+
+```bash
+cd /opt/qwen-template 2>/dev/null || cd /workspace/qwen-template
+git pull && bash scripts/install_qwen_node.sh && echo "restart ComfyUI now"
+```
+
+In the saved workflow JSON the tell is that `image4` and `target_latent` have no
+`localized_name` field while the other inputs do — the frontend resolved the core
+schema and kept your extra slots as unrecognised leftovers.
 
 ## CUDA out of memory
 

@@ -46,10 +46,10 @@ HF_REPO="${HF_REPO:-Phr00t/Qwen-Image-Edit-Rapid-AIO}"
 # Comma-separated keys from the table in scripts/download_models.sh.
 MODELS="${MODELS:-v23-sfw}"
 
-# shadow    register a fixed node that overrides the core one (default, safest)
-# overwrite replace ComfyUI's comfy_extras/nodes_qwen.py (the author's method)
+# append    (default) append a redefinition to comfy_extras/nodes_qwen.py
+# overwrite replace that file with the author's version (drops a core node)
 # none      leave the encoder node alone
-PATCH_MODE="${PATCH_MODE:-shadow}"
+PATCH_MODE="${PATCH_MODE:-append}"
 
 INSTALL_MANAGER="${INSTALL_MANAGER:-1}"
 COMFY_PORT="${COMFY_PORT:-8188}"
