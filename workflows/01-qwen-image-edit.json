@@ -103,7 +103,7 @@
       ],
       "flags": {},
       "order": 2,
-      "mode": 0,
+      "mode": 4,
       "inputs": [],
       "outputs": [
         {
@@ -126,7 +126,7 @@
         "example.png",
         "image"
       ],
-      "title": "Input Image 2 (optional)"
+      "title": "Input Image 2 \u2014 BYPASSED (Ctrl+B to enable)"
     },
     {
       "id": 4,
@@ -446,7 +446,7 @@
         "Node name for S&R": "Note"
       },
       "widgets_values": [
-        "QWEN IMAGE EDIT \u2014 Rapid AIO\n\nSETTINGS (v23):  euler_ancestral / beta, 4-8 steps, CFG 1.0, denoise 1.0\nSETTINGS (v19):  er_sde / beta  (swap the checkpoint too)\n\nDENOISE STAYS AT 1.0. This is NOT SDXL img2img -- the input photo enters\nthrough the text-encoder node as conditioning, not through the latent.\n\nINPUT IMAGES are optional. Unplug both LoadImage nodes for pure text-to-image.\nUp to 4 image inputs are available on the patched encoder node.\n\n'Final Image Size' (EmptyLatentImage) controls the OUTPUT size and is also fed\ninto target_latent so the encoder scales your references to match. Match the\naspect ratio of your input photo or you will get unwanted crops.\n\nPROMPTING: give an instruction, not a caption.\n  good -> \"Remove the person on the left. Keep everything else identical.\"\n  bad  -> \"a street with one person\"\nAdding \"Professional digital photography\" reduces the plastic-skin look.\n\nLeave the negative prompt EMPTY -- at CFG 1.0 it does nothing."
+        "QWEN IMAGE EDIT \u2014 Rapid AIO\n\nSETTINGS (v23):  euler_ancestral / beta, 4-8 steps, CFG 1.0, denoise 1.0\nSETTINGS (v19):  er_sde / beta  (swap the checkpoint too)\n\nDENOISE STAYS AT 1.0. This is NOT SDXL img2img -- the input photo enters\nthrough the text-encoder node as conditioning, not through the latent.\n\nINPUT IMAGES: the second one ships BYPASSED, so by default this edits a\nsingle photo. Select it and hit Ctrl+B to switch it on for composition\n(\"put the woman from Picture 1 into the hallway from Picture 2\") -- the\nencoder numbers references in prompt order. The patched node takes 4.\nBypass both for pure text-to-image.\n\nA wired-but-unwanted reference is NOT free: the model will try to use it.\n\n'Final Image Size' (EmptyLatentImage) controls the OUTPUT size and is also fed\ninto target_latent so the encoder scales your references to match. Match the\naspect ratio of your input photo or you will get unwanted crops.\n\nPROMPTING: give an instruction, not a caption.\n  good -> \"Remove the person on the left. Keep everything else identical.\"\n  bad  -> \"a street with one person\"\nAdding \"Professional digital photography\" reduces the plastic-skin look.\n\nLeave the negative prompt EMPTY -- at CFG 1.0 it does nothing."
       ],
       "title": "READ ME"
     }
