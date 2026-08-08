@@ -141,17 +141,23 @@ Roughly 15–25 minutes for the first run; later runs hit the layer cache.
 > takes the better part of an hour. The Makefile target is there for Linux hosts
 > and for debugging.
 
-### 2. Make the package public — one time
+### 2. Check the package is pullable
 
-GHCR packages default to **private**, and RunPod cannot pull a private image
-without registry credentials. After the first successful build:
+RunPod pulls anonymously, so the GHCR package has to be public. Published from a
+public repo it generally already is — verify rather than assume:
 
-**GitHub repo → Packages → `qwen-template` → Package settings → Change visibility
-→ Public.**
+```bash
+TOKEN=$(curl -s "https://ghcr.io/token?scope=repository:<user>/qwen-template:pull&service=ghcr.io" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $TOKEN" \
+  -H "Accept: application/vnd.oci.image.index.v1+json" \
+  "https://ghcr.io/v2/<user>/qwen-template/manifests/latest"
+```
 
-(Prefer to keep it private? Leave it, and use **Select registry authentication**
-in the RunPod template with a GitHub personal access token that has
-`read:packages`.)
+`200` means RunPod can pull it — nothing to do. `401` or `403` means it is
+private: **GitHub repo → Packages → `qwen-template` → Package settings → Change
+visibility → Public**, or keep it private and use **Select registry
+authentication** in the RunPod template with a PAT carrying `read:packages`.
 
 ### 3. Create the template
 
